@@ -30,6 +30,7 @@ img {
 .title {
     color: white;
     width: 65%;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
 }
 
 .audio-player {
@@ -176,10 +177,15 @@ img {
     .container {
         width: 100%;
         flex-direction: column;
+        padding: 20px 0;
     }
 
     .logo {
         width: 100%;
+    }
+
+    .logo img {
+        width: 65%;
     }
 
     .player-container {

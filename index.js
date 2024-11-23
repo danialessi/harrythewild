@@ -15,47 +15,71 @@ const muteIcon = `
     <path fill-rule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM12.293 7.293a1 1 0 011.414 0L15 8.586l1.293-1.293a1 1 0 111.414 1.414L16.414 10l1.293 1.293a1 1 0 01-1.414 1.414L15 11.414l-1.293 1.293a1 1 0 01-1.414-1.414L13.586 10l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd" />
   </svg>`;
 
-function initializePlayer(player) {
-  const audio = player.querySelector('audio');
-  const playerButton = player.querySelector('.player-button');
-  const timeline = player.querySelector('.timeline');
-  const soundButton = player.querySelector('.sound-button');
+  let activePlayer = null; // Variabile per tracciare il player attivo
 
-  function toggleAudio() {
-    if (audio.paused) {
-      audio.play();
-      playerButton.innerHTML = pauseIcon;
-    } else {
-      audio.pause();
-      playerButton.innerHTML = playIcon;
+  function initializePlayer(player) {
+    const audio = player.querySelector('audio');
+    const playerButton = player.querySelector('.player-button');
+    const timeline = player.querySelector('.timeline');
+    const soundButton = player.querySelector('.sound-button');
+  
+    function stopOtherPlayers() {
+      if (activePlayer && activePlayer !== audio) {
+        activePlayer.pause(); // Ferma l'audio del player attivo
+        const prevPlayerButton = activePlayer.parentElement.querySelector('.player-button');
+        if (prevPlayerButton) {
+          prevPlayerButton.innerHTML = playIcon; // Resetta l'icona del pulsante
+        }
+      }
+      activePlayer = audio; // Imposta il player attivo attuale
     }
+  
+    function toggleAudio() {
+      if (audio.paused) {
+        stopOtherPlayers(); // Ferma gli altri player
+        audio.play();
+        playerButton.innerHTML = pauseIcon;
+      } else {
+        audio.pause();
+        playerButton.innerHTML = playIcon;
+        if (activePlayer === audio) {
+          activePlayer = null; // Resetta il player attivo se viene messo in pausa
+        }
+      }
+    }
+  
+    function changeTimelinePosition() {
+      if (audio.duration) {
+        const percentagePosition = (100 * audio.currentTime) / audio.duration;
+        timeline.style.backgroundSize = `${percentagePosition}% 100%`;
+        timeline.value = percentagePosition;
+      }
+    }
+  
+    function audioEnded() {
+      playerButton.innerHTML = playIcon; // Resetta l'icona del pulsante
+      if (activePlayer === audio) {
+        activePlayer = null; // Resetta il player attivo
+      }
+    }
+  
+    function changeSeek() {
+      const time = (timeline.value * audio.duration) / 100;
+      audio.currentTime = time;
+    }
+  
+    function toggleSound() {
+      audio.muted = !audio.muted;
+      soundButton.innerHTML = audio.muted ? muteIcon : soundIcon;
+    }
+  
+    // Aggiungi gli event listener
+    playerButton.addEventListener('click', toggleAudio);
+    audio.addEventListener('timeupdate', changeTimelinePosition);
+    audio.addEventListener('ended', audioEnded);
+    timeline.addEventListener('change', changeSeek);
+    soundButton.addEventListener('click', toggleSound);
   }
-
-  function changeTimelinePosition() {
-    const percentagePosition = (100 * audio.currentTime) / audio.duration;
-    timeline.style.backgroundSize = `${percentagePosition}% 100%`;
-    timeline.value = percentagePosition;
-  }
-
-  function audioEnded() {
-    playerButton.innerHTML = playIcon;
-  }
-
-  function changeSeek() {
-    const time = (timeline.value * audio.duration) / 100;
-    audio.currentTime = time;
-  }
-
-  function toggleSound() {
-    audio.muted = !audio.muted;
-    soundButton.innerHTML = audio.muted ? muteIcon : soundIcon;
-  }
-
-  playerButton.addEventListener('click', toggleAudio);
-  audio.addEventListener('timeupdate', changeTimelinePosition);
-  audio.addEventListener('ended', audioEnded);
-  timeline.addEventListener('change', changeSeek);
-  soundButton.addEventListener('click', toggleSound);
-}
-
-document.querySelectorAll('.audio-player').forEach(initializePlayer);
+  
+  // Inizializza tutti i player
+  document.querySelectorAll('.audio-player').forEach(initializePlayer);
